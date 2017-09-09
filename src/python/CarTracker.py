@@ -148,9 +148,9 @@ class VideoCamera:
                 self.rawCapture.truncate(0)
       
             # detect cars
-            grayFrame = cv2.cvtColor(self.frame,cv2.COLOR_BGR2GRAY)
+            #grayFrame = cv2.cvtColor(self.frame,cv2.COLOR_BGR2GRAY)
             tempCarList = self.carCascade.detectMultiScale(
-                grayFrame,
+                self.frame,
                 scaleFactor = 1.1,
                 minNeighbors = 3
                 )
