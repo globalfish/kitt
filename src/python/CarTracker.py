@@ -1,19 +1,25 @@
 
 
 #
-# demo to get webcam images from a Mac (possibly a PC?) and into AWS Rekognition
-# Ideally, this will get triggered by an external event, e.g. a sensor that detects
-# motion, a doorbell
+# Car sensor demo using OpenCV
 #
-# Author: vswamina, April 2017.
-# 2017_08_06 Updated with multiple changes for sharing
+# Author: vswamina, Sept 2017.
+# 2017_09_09 Created from code in globalfish/FaceTracker
 
 # With a lot of help from the Internet
 import cv2
-import boto3
 import json
-import gallery
 import threading
+import time
+
+
+#
+# Type of camera you want to use: we keep the code here but we shall use the PiCamera
+#
+DLINK930 = 1 # D-Link camera model 930. URL = user:pass@ip:port/video.cgi
+DLINK2312 = 2 # D-Link camera model 2312. URL = user:pass@ip/video1.mjpg 
+BUILTINCAMERA = 3 # USB or built in camera on laptop
+PICAMERA = 4 # Pi camera if running on Raspberry Pi
 
 #
 # if you have multiple cameras on your device then just use appropriate device
@@ -21,6 +27,8 @@ import threading
 DEFAULT_CAM = 0
 REAR_CAM = 1
 XTNL_CAM = 2
+flywheelPin = 14 #broadcom pin to start flywheel
+triggerPin = 15
 
 #
 # colors to use for bounding box and text
@@ -28,38 +36,91 @@ RED = 0, 0, 255
 BLUE = 255, 0, 0
 GREEN = 0, 255, 0
 WHITE = 255,255,255
+BLACK=10,10,10
 
 # which camera do we use
 camera_port = DEFAULT_CAM
 
-# setup AWS Rekognition client
-client = boto3.client('rekognition')
 
 #
-# load images from S3 bucket and create a gallery of known faces
-#
-s3client = boto3.client("s3")
-gallery.createGallery(client, s3client, "com.vswamina.aws.test.images")
+# generic class that's called with a parameter and this then instantiates the
+# correct type of implementation. The video recognition logic is in this class
 
-#
-# In order to avoid buffering, we read the camera images
-# in a separate thread and then get images as needed
+class VideoCamera:
+    
+    def __init__(self, cameraType, arg1=DEFAULT_CAM, arg2=None):
 
-class VideoStreamFromCamera:
-    def __init__(self, src=camera_port):
+        self.cameraType = cameraType
+        
+        # setup camera based on cameraType
+        if( cameraType == BUILTINCAMERA):
+            if( arg1 is not None ):
+                print("BUILTINCAMERA OK")
+                camera_port = arg1
+                # no additional imports needed, OpenCV3 can deal with cameras
+                self.camera = cv2.VideoCapture(camera_port)
+                (self.grabbed, self.frame) = self.camera.read()
+            else:
+                print("If using built in camera, need to specify camera port")
 
-        # setup camera to capture
-        self.camera = cv2.VideoCapture(camera_port)
-        (self.grabbed, self.frame) = self.camera.read()
+        elif( cameraType == DLINK930):
+            if( arg1 is not None and arg2 is not None):
+                print("DLINK930 OK")
+                cameraUrl = arg1
+                authString = arg2
+                streamurl = "http://" + ':'.join(authString) + '@' + cameraUrl + "/video.cgi"
+                # no additional imports needed, OpenCV3 can deal with the URL
+                self.camera= cv2.VideoCapture(streamurl)
+                (self.grabbed, self.frame) = self.camera.read()
+            else:
+                print("If using IP Camera, need to specify camera IP and user:password")
+
+        elif( cameraType == DLINK2312):
+            if( arg1 is not None and arg2 is not None):
+                print("DLINK2312 OK")
+                cameraUrl = arg1
+                authString = arg2
+                streamurl = "http://" + ':'.join(authString) + '@' + cameraUrl + "/video1.mjpg"
+                # no additional imports needed, OpenCV3 can deal with the URL
+                self.camera= cv2.VideoCapture(streamurl)
+                (self.grabbed, self.frame) = self.camera.read()
+            else:
+                print("If using IP Camera, need to specify camera IP and user:password")
+            
+        elif( cameraType == PICAMERA):
+            if( arg1 is not None and arg2 is not None):
+                # imports to handle picamera
+                from picamera.array import PiRGBArray
+                from picamera import PiCamera
+                self.camera = PiCamera()
+                self.camera.resolution = arg1
+                self.camera.framerate = arg2
+                self.rawCapture = PiRGBArray(self.camera, size=self.camera.resolution)
+                self.stream = self.camera.capture_continuous(
+                self.rawCapture, format="bgr", use_video_port=True)
+            else:
+                print("If using Pi Camera, need to specify resolution (x,y) and framerate")
+        else:
+            print("couldn't make sense of your arguments. Cannot proceed!")
+            exit()
+            
+        # default color for bounding box
         self.color = RED
+
+        #default coordinates for bounding box
         self.boxTopLeftX = 0
         self.boxTopLeftY = 0
         self.boxBotRightX = 0
         self.boxBotRightY = 0
         self.personName = "UNKNOWN"
+
+        # default font for name
         self.font = cv2.FONT_HERSHEY_SIMPLEX
-        self.faceCascade = cv2.CascadeClassifier('car.xml')
-        self.faces=[] # initialize else we get an error in self.readFaces
+
+
+        self.carCascade = cv2.CascadeClassifier('car.xml')
+        self.cars=[] # initialize else we get an error in self.readFaces
+        self.foundCars = False
         
         # should thread run or stop
         self.stopped = False
@@ -74,25 +135,37 @@ class VideoStreamFromCamera:
         while True:
             if self.stopped:
                 return
-            (self.grabbed, self.frame) = self.camera.read()
-            self.drawRect(self.boxTopLeftX, self.boxTopLeftY,
-                          self.boxBotRightX, self.boxBotRightY,
-                          self.color)
+            
+            if( self.cameraType == BUILTINCAMERA or
+                self.cameraType == DLINK930 or
+                self.cameraType == DLINK2312):
+                (self.grabbed, self.frame) = self.camera.read()
+                
+            if( self.cameraType == PICAMERA):
+                self.frame=f.array
+                self.rawCapture.truncate(0)
       
-            # detect faces
-            self.faces = self.faceCascade.detectMultiScale(
+            # detect cars
+            self.cars = self.carCascade.detectMultiScale(
                 self.frame,
-                scaleFactor = 1.2,
+                scaleFactor = 1.1,
                 minNeighbors = 3
                 )
+            
             # draw bounding box
-            for (x,y,w,h) in self.faces:
+            for (x,y,w,h) in self.cars:
                 self.drawRect(x, y, x+w, y+h, self.color)
-                cv2.putText(self.frame, self.personName, (x, y-10), self.font, 0.5, self.color, 2)
-                
-            cv2.imshow('Rekognition', self.frame)        
-            cv2.waitKey(1)
 
+            if( len(self.cars) > 0):
+                self.foundCars = True
+            else:
+                self.foundCars = False
+            
+            cv2.imshow('Cars', self.frame)        
+            key = cv2.waitKey(1)
+            if( 'q' == chr(key & 255) or 'Q' == chr(key & 255)):
+                self.stopped = True
+                
     def drawRect(self, x1, y1, x2, y2, color):
         cv2.rectangle(self.frame, (x1, y1), (x2, y2), color, 2)
         return
@@ -101,12 +174,17 @@ class VideoStreamFromCamera:
     def read(self):
         return self.frame
 
-    def readFaces(self):
-        return self.faces
-        
+    def readCars(self):
+        return self.cars
+
+    def foundCarsInFrame(self):
+        return self.foundCars
+    
     def stop(self):
         self.stopped = True
         cv2.destroyAllWindows()
+        if( self.cameraType == PICAMERA):
+            self.rawCapture.truncate(0)
         del self.camera
 
     def setColor(self, color):
@@ -118,9 +196,51 @@ class VideoStreamFromCamera:
         self.boxBotRightX = x2
         self.boxBotRightY = y2
 
-    def setName(self, name):
-        self.personName = name
+
+#
+# Thread for voice prompts. Run in separate thread to avoid blocking main thread
+# and also to prevent irritating repetition and chatter
+class VoicePrompts:
+    def __init__(self, threshold=2):
+
+        timeThreshold = 2 # 2 seconds between prompts
+        #espeak.synth("Voice system initialized")
+        #
+        # We store the previous phrase to avoid repeating the same phrase
+        # If new phrase is the same as previous phrase do nothing
+        self.phrase = None
+        self.oldPhrase = None
         
+        self.stopped = False
+        self.threshold=threshold
+        time.sleep(threshold)
+        
+    def start(self):
+        threading.Thread(target=self.speak, args=()).start()
+        return self
+
+    def speak(self):
+        while True:
+
+            if( self.stopped):
+                return
+            
+            if( not self.phrase == None):
+                if( not self.phrase == self.oldPhrase):
+                    #espeak.synth(self.phrase)
+                    self.oldPhrase = self.phrase
+                
+                # sleep thread for duration to allow gap between voice prompts
+                time.sleep(self.threshold)
+
+
+    def setPhrase(self, phrase):
+        self.phrase = phrase
+
+    def stop(self):
+        self.stopped = True
+
+    
 def IsBoundingBoxInFrame(frameSize, box):
 
     (x1,y1,x2, y2) = box
@@ -130,10 +250,16 @@ def IsBoundingBoxInFrame(frameSize, box):
         return True
     else:
         return False
-    
-vs = VideoStreamFromCamera().start()
 
-faceIdentified = False
+x = 640
+y = 480
+frameArea = x*y
+#vs = VideoCamera(PICAMERA, (x,y), 16)
+vs = VideoCamera(BUILTINCAMERA, 0)
+vs.start()
+vp = VoicePrompts().start()
+
+carsIdentified = False
 
 try: 
     while True:
@@ -142,8 +268,26 @@ try:
         camera_capture = vs.read()
         frameDims = camera_capture.shape
 
-        vs.setColor(GREEN)
+        if( vs.foundCarsInFrame() ):
+
+            carsIdentified = True
+
+            # get the cars
+            cars = vs.readCars()
+            
+            # OpenCV has found cars in image: let's see how far they are based on size
+            for (x,y,w,h) in cars:
+
+                area = w*h
                 
+                if( area > 0.1*frameArea):
+                    vs.setColor(RED)
+                    #vs.drawRect(x, y, x+w, y+h, RED)
+                else:
+                    vs.setColor(GREEN)
+                    #vs.drawRect(x, y, x+w, y+h, GREEN)
+                    
 except (KeyboardInterrupt): # expect to be here when keyboard interrupt
     vs.stop()
+    vp.stop()
     
