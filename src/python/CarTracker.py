@@ -144,7 +144,7 @@ class VideoCamera:
                 (self.grabbed, self.frame) = self.camera.read()
                 
             if( self.cameraType == PICAMERA):
-                self.frame=self.rawCapture.array
+                self.frame=self.stream.array
                 self.rawCapture.truncate(0)
       
             # detect cars
