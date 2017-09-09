@@ -97,7 +97,7 @@ class VideoCamera:
                 self.camera.framerate = arg2
                 self.rawCapture = PiRGBArray(self.camera, size=self.camera.resolution)
                 self.stream = self.camera.capture_continuous(
-                self.rawCapture, format="bgr", use_video_port=True)
+                    self.rawCapture, format="bgr", use_video_port=True)
             else:
                 print("If using Pi Camera, need to specify resolution (x,y) and framerate")
         else:
@@ -146,22 +146,28 @@ class VideoCamera:
                 self.rawCapture.truncate(0)
       
             # detect cars
-            self.cars = self.carCascade.detectMultiScale(
-                self.frame,
+            grayFrame = cv2.cvtColor(self.frame,cv2.COLOR_BGR2GRAY)
+            tempCarList = self.carCascade.detectMultiScale(
+                grayFrame,
                 scaleFactor = 1.1,
                 minNeighbors = 3
                 )
             
-            # draw bounding box
-            for (x,y,w,h) in self.cars:
-                self.drawRect(x, y, x+w, y+h, self.color)
+            # draw bounding box and track only large objects
+            for (x,y,w,h) in tempCarList:
+                area = w*h
+                
+                if(area > 10000):
+                    self.cars.append((x,y,w,h))
+                    self.drawRect(x, y, x+w, y+h, self.color)
 
             if( len(self.cars) > 0):
                 self.foundCars = True
             else:
                 self.foundCars = False
-            
-            cv2.imshow('Cars', self.frame)        
+
+            tempImg = cv2.resize(self.frame, (320,240))
+            cv2.imshow('Cars', tempImg)        
             key = cv2.waitKey(1)
             if( 'q' == chr(key & 255) or 'Q' == chr(key & 255)):
                 self.stopped = True
@@ -275,17 +281,6 @@ try:
             # get the cars
             cars = vs.readCars()
             
-            # OpenCV has found cars in image: let's see how far they are based on size
-            for (x,y,w,h) in cars:
-
-                area = w*h
-                
-                if( area > 0.1*frameArea):
-                    vs.setColor(RED)
-                    #vs.drawRect(x, y, x+w, y+h, RED)
-                else:
-                    vs.setColor(GREEN)
-                    #vs.drawRect(x, y, x+w, y+h, GREEN)
                     
 except (KeyboardInterrupt): # expect to be here when keyboard interrupt
     vs.stop()
