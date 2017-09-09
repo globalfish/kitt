@@ -98,6 +98,8 @@ class VideoCamera:
                 self.rawCapture = PiRGBArray(self.camera, size=self.camera.resolution)
                 self.stream = self.camera.capture_continuous(
                     self.rawCapture, format="bgr", use_video_port=True)
+                self.frame=self.rawCapture.array
+                self.rawCapture.truncate(0)
             else:
                 print("If using Pi Camera, need to specify resolution (x,y) and framerate")
         else:
@@ -142,7 +144,7 @@ class VideoCamera:
                 (self.grabbed, self.frame) = self.camera.read()
                 
             if( self.cameraType == PICAMERA):
-                self.frame=f.array
+                self.frame=self.rawCapture.array
                 self.rawCapture.truncate(0)
       
             # detect cars
