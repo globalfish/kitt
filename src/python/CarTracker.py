@@ -95,8 +95,6 @@ class VideoCamera:
                 self.camera = PiCamera()
                 self.camera.resolution = arg1
                 self.camera.framerate = arg2
-                self.rawCapture = PiRGBArray(self.camera, size=self.camera.resolution)
-                self.frame=self.rawCapture.array
                 self.rawCapture = PiRGBArray(self.camera, size=(640,480))
                 time.sleep(1)
 
@@ -195,6 +193,7 @@ class VideoCamera:
         cv2.destroyAllWindows()
         if( self.cameraType == PICAMERA):
             self.rawCapture.truncate(0)
+            self.camera.close
         del self.camera
 
     def setColor(self, color):
