@@ -115,7 +115,8 @@ class VideoCamera:
         self.font = cv2.FONT_HERSHEY_SIMPLEX
 
         self.carCascade = cv2.CascadeClassifier('car.xml')
-        self.cars=[] # initialize else we get an error in self.readFaces
+        self.nearCars=[] # initialize else we get an error in self.readFaces
+        self.farCars=[] # initialize else we get an error in self.readFaces
         self.foundCars = False
         
         # should thread run or stop
@@ -143,23 +144,20 @@ class VideoCamera:
                 scaleFactor = 1.1,
                 minNeighbors = 5
                 )
-            self.cars = []
+            self.nearCars = []
+            self.farCars = []
+            
             # draw bounding box and track only large objects
             for (x,y,w,h) in tempCarList:
                 area = w*h
 
                 if(area > 2000 and area < 5000):
-                    self.cars.append((x,y,w,h))
+                    self.farCars.append((x,y,w,h))
                     self.drawRect(x, y, x+w, y+h, GREEN)
                     
                 if(area >= 5000):
-                    self.cars.append((x,y,w,h))
+                    self.nearCars.append((x,y,w,h))
                     self.drawRect(x, y, x+w, y+h, RED)
-
-            if( len(self.cars) > 0):
-                self.foundCars = True
-            else:
-                self.foundCars = False
 
             cv2.moveWindow('Cars',1,1)
             cv2.imshow('Cars', self.frame)        
@@ -175,12 +173,24 @@ class VideoCamera:
     def read(self):
         return self.frame
 
-    def readCars(self):
-        return self.cars
+    def readNearCars(self):
+        return self.nearCars
 
-    def foundCarsInFrame(self):
-        return self.foundCars
-    
+    def foundNearCarsInFrame(self):
+        if( len(self.nearCars > 0):
+            return True
+        else:
+            return False
+
+    def readFarCars(self):
+        return self.farCars
+
+    def foundFarCarsInFrame(self):
+        if( len(self.farCars > 0):
+            return True
+        else:
+            return False
+            
     def stop(self):
         self.stopped = True
         cv2.destroyAllWindows()
@@ -232,9 +242,9 @@ class VoicePrompts:
             
             if( not self.phrase == None):
                 if( not self.phrase == self.oldPhrase):
-                    #espeak.synth(self.phrase)
+                    espeak.synth(self.phrase)
                     self.oldPhrase = self.phrase
-                
+                    self.Phrase == None
                 # sleep thread for duration to allow gap between voice prompts
                 time.sleep(self.threshold)
 
@@ -272,12 +282,8 @@ try:
         camera_capture = vs.read()
         frameDims = camera_capture.shape
 
-        if( vs.foundCarsInFrame() ):
-
-            carsIdentified = True
-
-            # get the cars
-            cars = vs.readCars()
+        if( vs.foundNearCarsInFram() ):
+            vp.setPhrase("Watch out...car nearby")
 
         if( vs.isStopped() ):
             vs.stop()
