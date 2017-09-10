@@ -1,5 +1,3 @@
-
-
 #
 # Car sensor demo using OpenCV
 #
@@ -11,7 +9,6 @@ import cv2
 import json
 import threading
 import time
-
 
 #
 # Type of camera you want to use: we keep the code here but we shall use the PiCamera
@@ -40,7 +37,6 @@ BLACK=10,10,10
 
 # which camera do we use
 camera_port = DEFAULT_CAM
-
 
 #
 # generic class that's called with a parameter and this then instantiates the
@@ -95,7 +91,7 @@ class VideoCamera:
                 self.camera = PiCamera()
                 self.camera.resolution = arg1
                 self.camera.framerate = arg2
-                self.rawCapture = PiRGBArray(self.camera, size=(640,480))
+                self.rawCapture = PiRGBArray(self.camera, size=self.camera.resolution)
                 time.sleep(1)
 
             else:
@@ -117,7 +113,6 @@ class VideoCamera:
         # default font for name
         self.font = cv2.FONT_HERSHEY_SIMPLEX
 
-
         self.carCascade = cv2.CascadeClassifier('car.xml')
         self.cars=[] # initialize else we get an error in self.readFaces
         self.foundCars = False
@@ -130,24 +125,24 @@ class VideoCamera:
         threading.Thread(target=self.update, args=()).start()
         return self
 
-    def update(self):
+    def update(self): # This will work only for Pi Camera
         # read camera
-        for frame in camera.capture_continuous(self.rawCapture, format="bgr", use_video_port=True):
+        for frame in self.camera.capture_continuous(self.rawCapture, format="bgr", use_video_port=True):
 
             if self.stopped:
                 return
             
-            self.frame=framearray
+            self.frame=frame.array
             self.rawCapture.truncate(0)
       
             # detect cars
-            #grayFrame = cv2.cvtColor(self.frame,cv2.COLOR_BGR2GRAY)
+            grayFrame = cv2.cvtColor(self.frame,cv2.COLOR_BGR2GRAY)
             tempCarList = self.carCascade.detectMultiScale(
                 self.frame,
                 scaleFactor = 1.1,
                 minNeighbors = 3
                 )
-            
+            self.cars = []
             # draw bounding box and track only large objects
             for (x,y,w,h) in tempCarList:
                 area = w*h
@@ -161,8 +156,7 @@ class VideoCamera:
             else:
                 self.foundCars = False
 
-            tempImg = cv2.resize(self.frame, (320,240))
-            cv2.imshow('Cars', tempImg)        
+            cv2.imshow('Cars', self.frame)        
             key = cv2.waitKey(1)
             if( 'q' == chr(key & 255) or 'Q' == chr(key & 255)):
                 self.stopped = True
@@ -189,6 +183,9 @@ class VideoCamera:
             self.camera.close
         del self.camera
 
+    def isStoppped(self):
+        return self.stopped
+    
     def setColor(self, color):
         self.color = color
         
@@ -253,8 +250,8 @@ def IsBoundingBoxInFrame(frameSize, box):
     else:
         return False
 
-x = 640
-y = 480
+x = 320
+y = 240
 frameArea = x*y
 #vs = VideoCamera(PICAMERA, (x,y), 16)
 vs = VideoCamera(BUILTINCAMERA, 0)
@@ -276,7 +273,10 @@ try:
 
             # get the cars
             cars = vs.readCars()
-            
+
+        if( vs.isStopped() ):
+            vs.stop()
+            vp.stop()
                     
 except (KeyboardInterrupt): # expect to be here when keyboard interrupt
     vs.stop()
