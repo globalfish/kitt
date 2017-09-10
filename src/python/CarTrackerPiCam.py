@@ -298,7 +298,7 @@ try:
                     vp.setPhrase("")
     
 
-                if( w*h > 7000 and abs(centerX-200)<50 && abs(centerY-150) < 50):
+                if( w*h > 7000 and abs(centerX-200)<50 and abs(centerY-150) < 50):
                     vp.setPhrase("You are too close")
                 else:
                     vp.setPhrase("")
