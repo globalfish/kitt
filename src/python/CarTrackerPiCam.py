@@ -281,15 +281,24 @@ try:
         if( vs.foundNearCarsInFrame() ):
             cars = vs.readNearCars()
             for car in cars:
+                print car
                 (x1,y1,x2,y2) = car
                 w = x2 - x1
                 h = y2 - y1
                 centerX = (x1+x2)/2
                 centerY = (y2+y1)/2
 
-                if ( w*h > 8000):
+                if ( w*h > 6000):
                     vp.setPhrase("Watch out. Vehicle ahead!")
-            
+                else:
+                    vp.setPhrase("")
+
+                if( len(cars) > 2):
+                    vp.setPhrase("Traffic ahead")
+
+                if( w*h > 8000):
+                    vp.setPhrase("You are too close")
+                    
         if( vs.isStopped() ):
             vs.stop()
             vp.stop()
