@@ -244,7 +244,7 @@ class VoicePrompts:
                 if( not self.phrase == self.oldPhrase):
                     espeak.synth(self.phrase)
                     self.oldPhrase = self.phrase
-                    self.Phrase == None
+                    self.phrase == None
                 # sleep thread for duration to allow gap between voice prompts
                 time.sleep(self.threshold)
 
@@ -277,14 +277,19 @@ carsIdentified = False
 
 try: 
     while True:
-        
-        # say cheese
-        camera_capture = vs.read()
-        frameDims = camera_capture.shape
 
         if( vs.foundNearCarsInFrame() ):
-            vp.setPhrase("Watch out...car nearby")
+            cars = vs.readNearCars()
+            for car in cars:
+                (x1,y1,x2,y2) = car
+                w = x2 - x1
+                h = y2 - y1
+                centerX = (x1+x2)/2
+                centerY = (y2+y1)/2
 
+                if ( w*h > 8000):
+                    vp.setPhrase("Watch out. Vehicle ahead!")
+            
         if( vs.isStopped() ):
             vs.stop()
             vp.stop()
