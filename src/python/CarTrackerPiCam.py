@@ -281,6 +281,7 @@ try:
 
         if( vs.foundNearCarsInFrame() ):
             cars = vs.readNearCars()
+                
             for car in cars:
 
                 (x1,y1,w, h) = car
@@ -292,14 +293,8 @@ try:
                 else:
                     vp.setPhrase("")
 
-                if( len(cars) > 2):
-                    vp.setPhrase("Traffic ahead")
-                else:
-                    vp.setPhrase("")
-    
-
                 if( w*h > 7000 and abs(centerX-200)<50 and abs(centerY-150) < 50):
-                    vp.setPhrase("You are too close")
+                    vp.setPhrase("Approaching vehicle")
                 else:
                     vp.setPhrase("")
                     
