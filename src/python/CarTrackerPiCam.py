@@ -269,7 +269,7 @@ def IsBoundingBoxInFrame(frameSize, box):
 x = 400
 y = 300
 frameArea = x*y
-vs = VideoCamera(PICAMERA, (x,y), 32)
+vs = VideoCamera(PICAMERA, (x,y), 15)
 vs.start()
 vp = VoicePrompts().start()
 
@@ -282,11 +282,9 @@ try:
             cars = vs.readNearCars()
             for car in cars:
 
-                (x1,y1,x2,y2) = car
-                w = x2 - x1
-                h = y2 - y1
-                centerX = (x1+x2)/2
-                centerY = (y2+y1)/2
+                (x1,y1,w, h) = car
+                centerX = x1+w/2
+                centerY = y1+h/2
 
                 if ( w*h > 4000):
                     vp.setPhrase("Watch out. Vehicle ahead!")
@@ -295,9 +293,14 @@ try:
 
                 if( len(cars) > 2):
                     vp.setPhrase("Traffic ahead")
+                else:
+                    vp.setPhrase("")
+    
 
-                if( w*h > 5000):
+                if( w*h > 6000):
                     vp.setPhrase("You are too close")
+                else:
+                    vp.setPhrase("")
                     
         if( vs.isStopped() ):
             vs.stop()
