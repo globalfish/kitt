@@ -9,6 +9,7 @@ import cv2
 import json
 import threading
 import time
+from espeak import espeak
 
 #
 # Type of camera you want to use: we keep the code here but we shall use the PiCamera
@@ -140,7 +141,7 @@ class VideoCamera:
             tempCarList = self.carCascade.detectMultiScale(
                 grayFrame,
                 scaleFactor = 1.1,
-                minNeighbors = 3
+                minNeighbors = 5
                 )
             self.cars = []
             # draw bounding box and track only large objects
@@ -160,6 +161,7 @@ class VideoCamera:
             else:
                 self.foundCars = False
 
+            cv2.moveWindow('Cars',1,1)
             cv2.imshow('Cars', self.frame)        
             key = cv2.waitKey(1)
             if( 'q' == chr(key & 255) or 'Q' == chr(key & 255)):
@@ -207,7 +209,7 @@ class VoicePrompts:
     def __init__(self, threshold=2):
 
         timeThreshold = 2 # 2 seconds between prompts
-        #espeak.synth("Voice system initialized")
+        espeak.synth("Voice system initialized")
         #
         # We store the previous phrase to avoid repeating the same phrase
         # If new phrase is the same as previous phrase do nothing
@@ -254,8 +256,8 @@ def IsBoundingBoxInFrame(frameSize, box):
     else:
         return False
 
-x = 320
-y = 240
+x = 400
+y = 300
 frameArea = x*y
 vs = VideoCamera(PICAMERA, (x,y), 32)
 vs.start()
@@ -282,6 +284,6 @@ try:
             vp.stop()
                     
 except (KeyboardInterrupt): # expect to be here when keyboard interrupt
-    vs.stop()
+    #vs.stop()
     vp.stop()
     
