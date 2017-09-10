@@ -90,6 +90,7 @@ class VideoCamera:
                 from picamera.array import PiRGBArray
                 from picamera import PiCamera
                 self.camera = PiCamera()
+                self.camera.contrast = 50
                 self.camera.resolution = arg1
                 self.camera.framerate = arg2
                 self.rawCapture = PiRGBArray(self.camera, size=self.camera.resolution)
@@ -297,7 +298,7 @@ try:
                     vp.setPhrase("")
     
 
-                if( w*h > 6000):
+                if( w*h > 7000):
                     vp.setPhrase("You are too close")
                 else:
                     vp.setPhrase("")
