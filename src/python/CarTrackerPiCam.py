@@ -151,11 +151,11 @@ class VideoCamera:
             for (x,y,w,h) in tempCarList:
                 area = w*h
 
-                if(area > 2000 and area < 5000):
+                if(area > 1000 and area < 3000):
                     self.farCars.append((x,y,w,h))
                     self.drawRect(x, y, x+w, y+h, GREEN)
                     
-                if(area >= 5000):
+                if(area >= 3000):
                     self.nearCars.append((x,y,w,h))
                     self.drawRect(x, y, x+w, y+h, RED)
 
@@ -288,7 +288,7 @@ try:
                 centerX = (x1+x2)/2
                 centerY = (y2+y1)/2
 
-                if ( w*h > 6000):
+                if ( w*h > 4000):
                     vp.setPhrase("Watch out. Vehicle ahead!")
                 else:
                     vp.setPhrase("")
@@ -296,7 +296,7 @@ try:
                 if( len(cars) > 2):
                     vp.setPhrase("Traffic ahead")
 
-                if( w*h > 8000):
+                if( w*h > 5000):
                     vp.setPhrase("You are too close")
                     
         if( vs.isStopped() ):
