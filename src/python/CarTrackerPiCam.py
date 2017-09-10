@@ -139,9 +139,9 @@ class VideoCamera:
             self.rawCapture.truncate(0)
       
             # detect cars using grayscale (for speed?)
-            grayFrame = cv2.cvtColor(self.frame,cv2.COLOR_BGR2GRAY)
+            #grayFrame = cv2.cvtColor(self.frame,cv2.COLOR_BGR2GRAY)
             tempCarList = self.carCascade.detectMultiScale(
-                grayFrame,
+                self.frame,
                 scaleFactor = 1.1,
                 minNeighbors = 5
                 )
@@ -152,11 +152,11 @@ class VideoCamera:
             for (x,y,w,h) in tempCarList:
                 area = w*h
 
-                if(area > 1000 and area < 3000):
+                if(area > 500 and area < 2000):
                     self.farCars.append((x,y,w,h))
                     self.drawRect(x, y, x+w, y+h, GREEN)
                     
-                if(area >= 3000):
+                if(area >= 2000):
                     self.nearCars.append((x,y,w,h))
                     self.drawRect(x, y, x+w, y+h, RED)
 
@@ -288,12 +288,12 @@ try:
                 centerX = x1+w/2
                 centerY = y1+h/2
 
-                if ( w*h > 4000):
+                if ( w*h > 3000):
                     vp.setPhrase("Watch out. Vehicle ahead!")
                 else:
                     vp.setPhrase("")
 
-                if( w*h > 7000 and abs(centerX-200)<50 and abs(centerY-150) < 50):
+                if( w*h > 4000 and abs(centerX-200)<50 and abs(centerY-150) < 50):
                     vp.setPhrase("Approaching vehicle")
                 else:
                     vp.setPhrase("")
