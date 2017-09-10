@@ -177,7 +177,7 @@ class VideoCamera:
         return self.nearCars
 
     def foundNearCarsInFrame(self):
-        if( len(self.nearCars > 0):
+        if( len(self.nearCars) > 0):
             return True
         else:
             return False
@@ -186,7 +186,7 @@ class VideoCamera:
         return self.farCars
 
     def foundFarCarsInFrame(self):
-        if( len(self.farCars > 0):
+        if( len(self.farCars) > 0):
             return True
         else:
             return False
@@ -282,7 +282,7 @@ try:
         camera_capture = vs.read()
         frameDims = camera_capture.shape
 
-        if( vs.foundNearCarsInFram() ):
+        if( vs.foundNearCarsInFrame() ):
             vp.setPhrase("Watch out...car nearby")
 
         if( vs.isStopped() ):
