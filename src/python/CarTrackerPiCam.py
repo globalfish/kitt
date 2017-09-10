@@ -135,10 +135,10 @@ class VideoCamera:
             self.frame=frame.array
             self.rawCapture.truncate(0)
       
-            # detect cars
+            # detect cars using grayscale (for speed?)
             grayFrame = cv2.cvtColor(self.frame,cv2.COLOR_BGR2GRAY)
             tempCarList = self.carCascade.detectMultiScale(
-                self.frame,
+                grayFrame,
                 scaleFactor = 1.1,
                 minNeighbors = 3
                 )
@@ -146,10 +146,14 @@ class VideoCamera:
             # draw bounding box and track only large objects
             for (x,y,w,h) in tempCarList:
                 area = w*h
-                
-                if(area > 10000):
+
+                if(area > 2000 and area < 5000):
                     self.cars.append((x,y,w,h))
-                    self.drawRect(x, y, x+w, y+h, self.color)
+                    self.drawRect(x, y, x+w, y+h, GREEN)
+                    
+                if(area >= 5000):
+                    self.cars.append((x,y,w,h))
+                    self.drawRect(x, y, x+w, y+h, RED)
 
             if( len(self.cars) > 0):
                 self.foundCars = True
@@ -183,7 +187,7 @@ class VideoCamera:
             self.camera.close
         del self.camera
 
-    def isStoppped(self):
+    def isStopped(self):
         return self.stopped
     
     def setColor(self, color):
@@ -253,8 +257,7 @@ def IsBoundingBoxInFrame(frameSize, box):
 x = 320
 y = 240
 frameArea = x*y
-#vs = VideoCamera(PICAMERA, (x,y), 16)
-vs = VideoCamera(BUILTINCAMERA, 0)
+vs = VideoCamera(PICAMERA, (x,y), 32)
 vs.start()
 vp = VoicePrompts().start()
 
