@@ -125,47 +125,98 @@ class VideoCamera:
 
     def start(self):
         # start thread to read frame
-        threading.Thread(target=self.update, args=()).start()
+        if( self.cameraType == PICAMERA):
+            threading.Thread(target=self.updatePiCam, args=()).start()
+        else:
+            threading.Thread(target=self.update, args=()).start()
+            
         return self
 
-    def update(self): # This will work only for Pi Camera
+    def updatePiCam(self): # This will work only for Pi Camera
         # read camera
-        for frame in self.camera.capture_continuous(self.rawCapture, format="bgr", use_video_port=True):
+        for frame in self.camera.capture_continuous(self.rawCapture,
+                    format="bgr", use_video_port=True):
 
             if self.stopped:
                 return
             
             self.frame=frame.array
             self.rawCapture.truncate(0)
-      
-            # detect cars using grayscale (for speed?)
-            #grayFrame = cv2.cvtColor(self.frame,cv2.COLOR_BGR2GRAY)
-            tempCarList = self.carCascade.detectMultiScale(
-                self.frame,
-                scaleFactor = 1.1,
-                minNeighbors = 5
-                )
-            self.nearCars = []
-            self.farCars = []
-            
-            # draw bounding box and track only large objects
-            for (x,y,w,h) in tempCarList:
-                area = w*h
 
-                if(area > 500 and area < 2000):
-                    self.farCars.append((x,y,w,h))
-                    self.drawRect(x, y, x+w, y+h, GREEN)
-                    
-                if(area >= 2000):
-                    self.nearCars.append((x,y,w,h))
-                    self.drawRect(x, y, x+w, y+h, RED)
+            self.processFrame()
 
-            cv2.moveWindow('Cars',1,1)
-            cv2.imshow('Cars', self.frame)        
-            key = cv2.waitKey(1)
-            if( 'q' == chr(key & 255) or 'Q' == chr(key & 255)):
-                self.stopped = True
+
+    def update(self): # update for other cameras
+        # read camera
+        while True:
+            if self.stopped:
+                return
+
+            (self.grabbed, self.frame) = self.camera.read()
                 
+            self.processFrame()
+
+    def processFrame(self):
+        # detect cars using grayscale (for speed?)
+        #grayFrame = cv2.cvtColor(self.frame,cv2.COLOR_BGR2GRAY)
+        tempCarList = self.carCascade.detectMultiScale(
+            self.frame,
+            scaleFactor = 1.1,
+            minNeighbors = 5
+            )
+        self.nearCars = []
+        self.farCars = []
+        
+        # draw bounding box and track only large objects
+        for (x,y,w,h) in tempCarList:
+            area = w*h
+
+            if(area > 500 and area < 2000):
+                self.farCars.append((x,y,w,h))
+                self.drawRect(x, y, x+w, y+h, GREEN)
+                
+            if(area >= 2000):
+                self.nearCars.append((x,y,w,h))
+                self.drawRect(x, y, x+w, y+h, RED)
+
+        cv2.moveWindow('Cars',1,1)
+        cv2.imshow('Cars', self.frame)        
+        key = cv2.waitKey(1)
+        if( 'q' == chr(key & 255) or 'Q' == chr(key & 255)):
+            self.stopped = True
+
+    def drawRect(self, x1, y1, x2, y2, color):
+        cv2.rectangle(self.frame, (x1, y1), (x2, y2), color, 2)
+        return
+
+    
+    def read(self):
+        return self.frame
+
+    def readFaces(self):
+        return self.faces
+        
+    def foundFacesInFrame(self):
+        return self.foundFaces
+
+    def stop(self):
+        self.stopped = True
+        cv2.destroyAllWindows()
+        del self.camera
+
+    def setColor(self, color):
+        self.color = color
+        
+    def setBoundingBox(self, x1,y1,x2,y2):
+        self.boxTopLeftX = x1
+        self.boxTopLeftY = y1
+        self.boxBotRightX = x2
+        self.boxBotRightY = y2
+
+    def setName(self, name):
+        self.personName = name
+
+
     def drawRect(self, x1, y1, x2, y2, color):
         cv2.rectangle(self.frame, (x1, y1), (x2, y2), color, 2)
         return
