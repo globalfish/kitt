@@ -181,7 +181,7 @@ class VideoCamera:
             if(area >= 2000):
                 self.nearCars.append((x,y,w,h))
                 self.drawRect(x, y, x+w, y+h, RED)
-                carCoount = carCoount + 1
+                carCount = carCount + 1
 
         windowName = 'Cars'
         cv2.namedWindow(windowName, cv2.WINDOW_NORMAL)
@@ -271,6 +271,12 @@ class VideoCamera:
         self.boxBotRightX = x2
         self.boxBotRightY = y2
 
+    def MouseTrack(event, x, y, flags, param):
+
+        if( event == cv2.EVENT_LBUTTONDOWN):
+            if( x > 5 and x < 50 and
+            y > 10 and y < 50):
+                self.stop()
 
 #
 # Thread for voice prompts. Run in separate thread to avoid blocking main thread
@@ -332,7 +338,7 @@ frameArea = x*y
 vs = VideoCamera(PICAMERA, (x,y), 15)
 vs.start()
 vp = VoicePrompts().start()
-
+cv2.setMouseCallback("Cars", vs.MouseTrack)
 carsIdentified = False
 
 try: 
