@@ -166,7 +166,11 @@ class VideoCamera:
             )
         self.nearCars = []
         self.farCars = []
-        
+        frameDims = self.frame.shape
+        frameX,frameY,_ = frameDims
+        frameCenterX = frameX/2
+        frameCenterY = frameY/2
+
         carCount = 0
         windowName = 'Cars'
         cv2.namedWindow(windowName, cv2.WINDOW_NORMAL)
@@ -174,13 +178,20 @@ class VideoCamera:
         for (x,y,w,h) in tempCarList:
             area = w*h
 
+            boxCenterX = (x+w)/2
+            boxCenterY = (y+h)/2
+
+            if( abs(boxCenterX - frameCenterX) > 50 and 
+                boxCenterY > (frameCenterY+100)):
+                continue
+
             if(area > 500 and area < 2000):
                 self.farCars.append((x,y,w,h))
                 self.drawRect(x, y, x+w, y+h, GREEN)
                 carCount = carCount + 1  
                 cv2.putText(self.frame, str(w*h), (x,y-10), self.font, 0.3, GREEN, 2)
 
-            if(area >= 2000):
+            if(area >= 2000 and area < 10000):
                 self.nearCars.append((x,y,w,h))
                 self.drawRect(x, y, x+w, y+h, RED)
                 carCount = carCount + 1
