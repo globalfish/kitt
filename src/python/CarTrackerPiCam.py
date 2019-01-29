@@ -174,17 +174,17 @@ class VideoCamera:
         for (x,y,w,h) in tempCarList:
             area = w*h
 
-            if(area > 250 and area < 1000):
+            if(area > 500 and area < 2000):
                 self.farCars.append((x,y,w,h))
                 self.drawRect(x, y, x+w, y+h, GREEN)
                 carCount = carCount + 1  
-                
-            if(area >= 1000):
+                cv2.putText(self.frame, str(w*h), (x,y-10), self.font, 0.3, GREEN, 2)
+
+            if(area >= 2000):
                 self.nearCars.append((x,y,w,h))
                 self.drawRect(x, y, x+w, y+h, RED)
                 carCount = carCount + 1
-
-            cv2.putText(windowName, str(w*h), (x,y-10), self.font, 0.5, WHITE, 2)
+                cv2.putText(self.frame, str(w*h), (x,y-10), self.font, 0.3, RED, 2)
 
         cv2.setWindowProperty(windowName, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
         #cv2.moveWindow(windowName,1,1)
