@@ -123,6 +123,10 @@ class VideoCamera:
         # should thread run or stop
         self.stopped = False
 
+        # skip this many frames when processing
+        self.framesToSkip = 3
+        self.currFrameCount = 0
+
     def start(self):
         # start thread to read frame
         if( self.cameraType == PICAMERA):
@@ -157,6 +161,17 @@ class VideoCamera:
             self.processFrame()
 
     def processFrame(self):
+
+        windowName = 'Cars'
+        cv2.namedWindow(windowName, cv2.WINDOW_NORMAL)
+
+        if( self.currFrameCount < self.framesToSkip):
+            currFrameCount = currFrameCount + 1
+            cv2.imshow(windowName, self.frame )
+            return
+
+        currFrameCount = 0
+        self.currFrameCount = self
         # detect cars using grayscale (for speed?)
         grayFrame = cv2.cvtColor(self.frame,cv2.COLOR_BGR2GRAY)
         tempCarList = self.carCascade.detectMultiScale(
@@ -172,8 +187,6 @@ class VideoCamera:
         frameCenterY = frameY/2
 
         carCount = 0
-        windowName = 'Cars'
-        cv2.namedWindow(windowName, cv2.WINDOW_NORMAL)
         # draw bounding box and track only large objects
         for (x,y,w,h) in tempCarList:
             area = w*h
