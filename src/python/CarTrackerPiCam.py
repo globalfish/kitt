@@ -166,12 +166,11 @@ class VideoCamera:
         cv2.namedWindow(windowName, cv2.WINDOW_NORMAL)
 
         if( self.currFrameCount < self.framesToSkip):
-            currFrameCount = currFrameCount + 1
+            self.currFrameCount = self.currFrameCount + 1
             cv2.imshow(windowName, self.frame )
             return
 
-        currFrameCount = 0
-        self.currFrameCount = self
+        self.currFrameCount = 0
         # detect cars using grayscale (for speed?)
         grayFrame = cv2.cvtColor(self.frame,cv2.COLOR_BGR2GRAY)
         tempCarList = self.carCascade.detectMultiScale(
