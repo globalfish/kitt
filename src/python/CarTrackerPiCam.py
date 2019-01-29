@@ -89,7 +89,7 @@ class VideoCamera:
                 # imports to handle picamera
                 from picamera.array import PiRGBArray
                 from picamera import PiCamera
-                self.camera = PiCamera()
+                self.camera = PiCamera(resolution=arg1, framerate=arg2)
                 self.camera.contrast = 50
                 self.camera.resolution = arg1
                 self.camera.framerate = arg2
@@ -140,7 +140,7 @@ class VideoCamera:
             if self.stopped:
                 return
             
-            self.frame=frame.array
+            self.frame=frame.array[0:250,0:400]
             self.rawCapture.truncate(0)
 
             self.processFrame()
@@ -161,8 +161,8 @@ class VideoCamera:
         #grayFrame = cv2.cvtColor(self.frame,cv2.COLOR_BGR2GRAY)
         tempCarList = self.carCascade.detectMultiScale(
             self.frame,
-            scaleFactor = 1.2,
-            minNeighbors = 1
+            scaleFactor = 1.05,
+            minNeighbors = 3
             )
         self.nearCars = []
         self.farCars = []
@@ -173,12 +173,12 @@ class VideoCamera:
         for (x,y,w,h) in tempCarList:
             area = w*h
 
-            if(area > 500 and area < 2000):
+            if(area > 250 and area < 1000):
                 self.farCars.append((x,y,w,h))
                 self.drawRect(x, y, x+w, y+h, GREEN)
                 carCount = carCount + 1  
                 
-            if(area >= 2000):
+            if(area >= 1000):
                 self.nearCars.append((x,y,w,h))
                 self.drawRect(x, y, x+w, y+h, RED)
                 carCount = carCount + 1
@@ -271,7 +271,7 @@ class VideoCamera:
         self.boxBotRightX = x2
         self.boxBotRightY = y2
 
-    def MouseTrack(event, x, y, flags, param):
+    def MouseTrack(self, event, x, y, flags, param):
 
         if( event == cv2.EVENT_LBUTTONDOWN):
             if( x > 5 and x < 50 and
@@ -333,7 +333,7 @@ def IsBoundingBoxInFrame(frameSize, box):
         return False
 
 x = 400
-y = 300
+y = 250
 frameArea = x*y
 vs = VideoCamera(PICAMERA, (x,y), 15)
 vs.start()
