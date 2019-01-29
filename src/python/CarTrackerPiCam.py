@@ -168,7 +168,8 @@ class VideoCamera:
         self.farCars = []
         
         carCount = 0
-
+        windowName = 'Cars'
+        cv2.namedWindow(windowName, cv2.WINDOW_NORMAL)
         # draw bounding box and track only large objects
         for (x,y,w,h) in tempCarList:
             area = w*h
@@ -183,11 +184,11 @@ class VideoCamera:
                 self.drawRect(x, y, x+w, y+h, RED)
                 carCount = carCount + 1
 
-        windowName = 'Cars'
-        cv2.namedWindow(windowName, cv2.WINDOW_NORMAL)
+            cv2.putText(windowName, str(w*h), (x,y-10), self.font, 0.5, WHITE, 2)
+
         cv2.setWindowProperty(windowName, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
         #cv2.moveWindow(windowName,1,1)
-        cv2.putText(self.frame, str(carCount), (10,300),self.font, 1.1, WHITE,2 )
+        cv2.putText(self.frame, str(carCount), (10,200),self.font, 1.1, WHITE,2 )
         cv2.imshow(windowName, self.frame)        
         key = cv2.waitKey(1)
         if( 'q' == chr(key & 255) or 'Q' == chr(key & 255)):
