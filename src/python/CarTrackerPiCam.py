@@ -158,9 +158,9 @@ class VideoCamera:
 
     def processFrame(self):
         # detect cars using grayscale (for speed?)
-        #grayFrame = cv2.cvtColor(self.frame,cv2.COLOR_BGR2GRAY)
+        grayFrame = cv2.cvtColor(self.frame,cv2.COLOR_BGR2GRAY)
         tempCarList = self.carCascade.detectMultiScale(
-            self.frame,
+            grayFrame,
             scaleFactor = 1.05,
             minNeighbors = 3
             )
@@ -187,7 +187,7 @@ class VideoCamera:
         cv2.namedWindow(windowName, cv2.WINDOW_NORMAL)
         cv2.setWindowProperty(windowName, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
         #cv2.moveWindow(windowName,1,1)
-        cv2.putText(self.frame, str(carCount), (10,10),self.font, 0.5, self.color,2 )
+        cv2.putText(self.frame, str(carCount), (10,300),self.font, 1.1, WHITE,2 )
         cv2.imshow(windowName, self.frame)        
         key = cv2.waitKey(1)
         if( 'q' == chr(key & 255) or 'Q' == chr(key & 255)):
