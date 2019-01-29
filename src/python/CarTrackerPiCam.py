@@ -123,10 +123,6 @@ class VideoCamera:
         # should thread run or stop
         self.stopped = False
 
-        # skip this many frames when processing
-        self.framesToSkip = 3
-        self.currFrameCount = 0
-
     def start(self):
         # start thread to read frame
         if( self.cameraType == PICAMERA):
@@ -165,12 +161,6 @@ class VideoCamera:
         windowName = 'Cars'
         cv2.namedWindow(windowName, cv2.WINDOW_NORMAL)
 
-        if( self.currFrameCount < self.framesToSkip):
-            self.currFrameCount = self.currFrameCount + 1
-            cv2.imshow(windowName, self.frame )
-            return
-
-        self.currFrameCount = 0
         # detect cars using grayscale (for speed?)
         grayFrame = cv2.cvtColor(self.frame,cv2.COLOR_BGR2GRAY)
         tempCarList = self.carCascade.detectMultiScale(
@@ -192,10 +182,6 @@ class VideoCamera:
 
             boxCenterX = (x+w)/2
             boxCenterY = (y+h)/2
-
-            if( abs(boxCenterX - frameCenterX) > 50 and 
-                boxCenterY > (frameCenterY+100)):
-                continue
 
             if(area > 500 and area < 2000):
                 self.farCars.append((x,y,w,h))
