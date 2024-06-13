@@ -1,4 +1,7 @@
 # Motorcycle HUD
+
+To view this in action please see https://github.com/globalfish/kitt/blob/master/motorcyclehud/media/2024_06_MotorcycleHUD.mp4
+
 ## Concept and Purpose
 I bought a new Royal Enfield brand motorcycle, the Super Meteor 650. Unfortunately this one does not come with a tachometer. 
 But it does have an OBD-II port that reports RPM, among other values. I wanted to create a little display that would read the
@@ -6,6 +9,10 @@ RPM and possibly a couple of other values and display it in my field of view as 
 - No modifications to the existing bike wiring to avoid warranty issues
 - Ability to detach/move the setup as needed
 - Minimize running wires around the bike
+
+Here's how it looks
+![image](media/20240612_193102.jpg)
+
 
 ## Approach
 I had a few ELM327 Bluetooth adapters at home and so I wanted to use those. An Arduino seemed the right choice to drive the 
