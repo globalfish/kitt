@@ -1,8 +1,11 @@
-# Motorcycle HUD
+# Motorcycle HUD: display vehicle data from onboard diagnostics port
+
+## Purpose
+I describe my effort at using a microcontroller (ESP32) to extract specific vehicle data(RPM, speed) from the diagnostics port (OBDII) using a Bluetooth adapter(ELM327) and display(OLED) when riding/driving.
 
 To view this in action please see https://github.com/globalfish/kitt/blob/master/motorcyclehud/media/2024_06_MotorcycleHUD.mp4
 
-## Concept and Purpose
+## Context
 I bought a new Royal Enfield brand motorcycle, the Super Meteor 650. Unfortunately this one does not come with a tachometer. 
 But it does have an OBD-II port that reports RPM, among other values. I wanted to create a little display that would read the
 RPM and possibly a couple of other values and display it in my field of view as I driving. Some of the goals of this exercise:
